@@ -1,0 +1,136 @@
+import { KpiEventKind } from '../../common/enums/kpi-event-kind.enum';
+
+export const KPI_EVENT_TYPES_SEED = [
+  {
+    code: 'SPRINT_EARLY_COMPLETION',
+    name: 'Hoàn thành Sprint trước hạn',
+    eventKind: KpiEventKind.BONUS,
+    defaultPoints: 3,
+  },
+  {
+    code: 'AFTER_HOURS_SUPPORT',
+    name: 'Hỗ trợ sự cố ngoài giờ',
+    eventKind: KpiEventKind.BONUS,
+    defaultPoints: 3,
+  },
+  {
+    code: 'PRODUCTION_INCIDENT_HANDLING',
+    name: 'Xử lý Incident Production',
+    eventKind: KpiEventKind.BONUS,
+    defaultPoints: 3,
+  },
+  {
+    code: 'NEW_EMPLOYEE_TRAINING',
+    name: 'Hỗ trợ đào tạo nhân sự mới',
+    eventKind: KpiEventKind.BONUS,
+    defaultPoints: 2,
+  },
+  {
+    code: 'HIGH_QUALITY_CODE_REVIEW',
+    name: 'Review code chất lượng cao',
+    eventKind: KpiEventKind.BONUS,
+    defaultPoints: 2,
+  },
+  {
+    code: 'SYSTEM_PERFORMANCE_OPTIMIZATION',
+    name: 'Tối ưu hiệu năng hệ thống',
+    eventKind: KpiEventKind.BONUS,
+    defaultPoints: 5,
+  },
+  {
+    code: 'INFRA_COST_OPTIMIZATION',
+    name: 'Tối ưu chi phí hạ tầng',
+    eventKind: KpiEventKind.BONUS,
+    defaultPoints: 5,
+  },
+  {
+    code: 'IMPLEMENTED_IDEA',
+    name: 'Ý tưởng được triển khai thực tế',
+    eventKind: KpiEventKind.BONUS,
+    defaultPoints: 5,
+  },
+  {
+    code: 'CUSTOMER_OR_MANAGER_PRAISE',
+    name: 'Được khách hàng hoặc quản lý khen thưởng',
+    eventKind: KpiEventKind.BONUS,
+    defaultPoints: 3,
+  },
+  {
+    code: 'TASK_NOT_UPDATED',
+    name: 'Không cập nhật Task',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -2,
+  },
+  {
+    code: 'MEETING_ABSENCE',
+    name: 'Không tham gia họp',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -2,
+  },
+  {
+    code: 'CODE_REVIEW_NOT_DONE',
+    name: 'Không review code được giao',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -2,
+  },
+  {
+    code: 'DEPLOY_NO_NOTICE',
+    name: 'Deploy không thông báo',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -5,
+  },
+  {
+    code: 'DOCUMENT_NOT_UPDATED',
+    name: 'Không cập nhật tài liệu',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -2,
+  },
+  {
+    code: 'RELEASE_PROCESS_VIOLATION',
+    name: 'Vi phạm quy trình release',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -5,
+  },
+  {
+    code: 'SECURITY_PROCESS_VIOLATION',
+    name: 'Vi phạm bảo mật',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -10,
+  },
+  {
+    code: 'SYSTEM_DOWNTIME',
+    name: 'Gây downtime hệ thống',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -10,
+  },
+  {
+    code: 'UNAUTHORIZED_PRODUCTION_CHANGE',
+    name: 'Tự ý thay đổi môi trường Production',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -10,
+  },
+  {
+    code: 'LATE_INCIDENT_REPORT',
+    name: 'Không báo cáo sự cố kịp thời',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -5,
+  },
+  {
+    code: 'DATA_SECURITY_VIOLATION',
+    name: 'Vi phạm bảo mật dữ liệu',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -20,
+  },
+  {
+    code: 'DATA_LOSS',
+    name: 'Gây mất dữ liệu',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -20,
+  },
+  {
+    code: 'INTENTIONAL_ERROR_CONCEALMENT',
+    name: 'Cố tình che giấu lỗi',
+    eventKind: KpiEventKind.PENALTY,
+    defaultPoints: -20,
+  },
+] as const;
