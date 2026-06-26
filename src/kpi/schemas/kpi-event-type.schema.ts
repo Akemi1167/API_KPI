@@ -33,7 +33,12 @@ export class KpiEventType {
   /** Trạng thái kích hoạt; loại bị vô hiệu hóa không dùng cho sự kiện mới. */
   @Prop({ default: true })
   isActive: boolean;
+
+  /** Thời điểm xóa mềm; null nếu chưa bị xóa. */
+  @Prop({ type: Date, default: null })
+  deletedAt?: Date | null;
 }
 
 export const KpiEventTypeSchema = SchemaFactory.createForClass(KpiEventType);
-KpiEventTypeSchema.index({ eventKind: 1, isActive: 1 });
+KpiEventTypeSchema.index({ eventKind: 1, isActive: 1, deletedAt: 1 });
+KpiEventTypeSchema.index({ deletedAt: 1 });

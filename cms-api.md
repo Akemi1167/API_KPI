@@ -183,6 +183,7 @@ Lấy lại profile sau F5 hoặc kiểm tra session.
 | Kỳ KPI — tạo/sửa | `POST /kpi-periods`, `PATCH /kpi-periods/:id` | ADMIN |
 | Kỳ KPI — đóng/khóa | `PATCH /kpi-periods/:id/close`, `.../lock` | ADMIN |
 | Danh mục cộng/trừ điểm | `GET/POST/PATCH /kpi-event-types` | ADMIN |
+| Danh mục — xóa mềm / khôi phục | `PATCH /kpi-event-types/:id/soft-delete`, `.../restore` | ADMIN |
 | Nhập sự kiện KPI | `GET/POST/DELETE /kpi-events` | ADMIN |
 | Kết quả KPI — danh sách | `GET /kpi-results` | ADMIN |
 | Kết quả KPI — tính điểm | `POST /kpi-results/calculate` | ADMIN |
@@ -352,7 +353,7 @@ Chỉ khi `status === "OPEN"`.
 
 #### `GET /kpi-event-types`
 
-**Query thêm:** `eventKind` (`BONUS` | `PENALTY`), `keyword` (tên)
+**Query thêm:** `eventKind` (`BONUS` | `PENALTY`), `keyword` (tên), `includeDeleted` (`true` để xem cả đã xóa mềm)
 
 **Response item:**
 
@@ -365,6 +366,7 @@ Chỉ khi `status === "OPEN"`.
   eventKind: 'BONUS' | 'PENALTY';
   defaultPoints: number;  // BONUS >= 0, PENALTY <= 0
   isActive: boolean;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -390,7 +392,22 @@ Cập nhật loại sự kiện.
 
 #### `PATCH /kpi-event-types/:id/deactivate`
 
-`isActive: false` — không dùng cho sự kiện mới.
+`isActive: false` — không dùng cho sự kiện mới (vẫn hiện trong danh sách).
+
+#### `PATCH /kpi-event-types/:id/soft-delete`
+
+Xóa mềm loại sự kiện: đặt `deletedAt`, `isActive: false`. Bản ghi **ẩn khỏi danh sách mặc định** và **public catalog**; sự kiện KPI đã nhập trước đó vẫn giữ `eventTypeSnapshot`.
+
+#### `PATCH /kpi-event-types/:id/restore`
+
+Khôi phục loại đã xóa mềm: `deletedAt: null`, `isActive: true`.
+
+| Hành động | `isActive` | `deletedAt` | Hiện danh sách | Dùng cho event mới |
+|-----------|------------|-------------|----------------|--------------------|
+| Bình thường | `true` | `null` | Có | Có |
+| Deactivate | `false` | `null` | Có | Không |
+| Soft delete | `false` | có giá trị | Không (trừ `includeDeleted=true`) | Không |
+| Restore | `true` | `null` | Có | Có |
 
 ---
 

@@ -1,4 +1,5 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { KpiEventKind } from '../../common/enums/kpi-event-kind.enum';
 
@@ -8,4 +9,10 @@ export class FindKpiEventTypesQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(KpiEventKind)
   eventKind?: KpiEventKind;
+
+  /** Bao gồm cả loại đã xóa mềm (mặc định: false). */
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  includeDeleted?: boolean;
 }

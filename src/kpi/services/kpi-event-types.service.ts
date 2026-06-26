@@ -28,6 +28,10 @@ export class KpiEventTypesService {
   async findAll(query: FindKpiEventTypesQueryDto) {
     const filter: Record<string, unknown> = {};
 
+    if (!query.includeDeleted) {
+      Object.assign(filter, this.notDeletedFilter());
+    }
+
     if (query.eventKind) {
       filter.eventKind = query.eventKind;
     }
@@ -58,7 +62,9 @@ export class KpiEventTypesService {
   }
 
   async findOne(id: string) {
-    const eventType = await this.kpiEventTypeModel.findById(id).exec();
+    const eventType = await this.kpiEventTypeModel
+      .findOne({ _id: id, ...this.notDeletedFilter() })
+      .exec();
     if (!eventType) {
       throw new NotFoundException('Không tìm thấy loại cộng/trừ điểm');
     }
@@ -66,7 +72,10 @@ export class KpiEventTypesService {
   }
 
   async findPublicCatalog(query: FindPublicKpiEventTypesQueryDto) {
-    const filter: Record<string, unknown> = { isActive: true };
+    const filter: Record<string, unknown> = {
+      isActive: true,
+      ...this.notDeletedFilter(),
+    };
 
     if (query.eventKind) {
       filter.eventKind = query.eventKind;
@@ -91,7 +100,9 @@ export class KpiEventTypesService {
   }
 
   async findByIdOrFail(id: string) {
-    const eventType = await this.kpiEventTypeModel.findById(id).exec();
+    const eventType = await this.kpiEventTypeModel
+      .findOne({ _id: id, ...this.notDeletedFilter() })
+      .exec();
     if (!eventType) {
       throw new NotFoundException('Loại cộng/trừ điểm không hợp lệ');
     }
@@ -99,7 +110,9 @@ export class KpiEventTypesService {
   }
 
   async update(id: string, dto: UpdateKpiEventTypeDto) {
-    const eventType = await this.kpiEventTypeModel.findById(id).exec();
+    const eventType = await this.kpiEventTypeModel
+      .findOne({ _id: id, ...this.notDeletedFilter() })
+      .exec();
 
     if (!eventType) {
       throw new NotFoundException('Không tìm thấy loại cộng/trừ điểm');
@@ -117,7 +130,11 @@ export class KpiEventTypesService {
 
   async deactivate(id: string) {
     const eventType = await this.kpiEventTypeModel
-      .findByIdAndUpdate(id, { isActive: false }, { new: true })
+      .findOneAndUpdate(
+        { _id: id, ...this.notDeletedFilter() },
+        { isActive: false },
+        { new: true },
+      )
       .exec();
 
     if (!eventType) {
@@ -127,8 +144,43 @@ export class KpiEventTypesService {
     return this.toResponse(eventType);
   }
 
+  async softDelete(id: string) {
+    const eventType = await this.kpiEventTypeModel.findById(id).exec();
+
+    if (!eventType || eventType.deletedAt) {
+      throw new NotFoundException('Không tìm thấy loại cộng/trừ điểm');
+    }
+
+    eventType.isActive = false;
+    eventType.deletedAt = new Date();
+    await eventType.save();
+
+    return this.toResponse(eventType);
+  }
+
+  async restore(id: string) {
+    const eventType = await this.kpiEventTypeModel.findById(id).exec();
+
+    if (!eventType || !eventType.deletedAt) {
+      throw new NotFoundException('Không tìm thấy loại cộng/trừ điểm đã xóa');
+    }
+
+    eventType.deletedAt = null;
+    eventType.isActive = true;
+    await eventType.save();
+
+    return this.toResponse(eventType);
+  }
+
+  private notDeletedFilter() {
+    return { deletedAt: null };
+  }
+
   private async ensureCodeUnique(code: string, excludeId?: string) {
-    const filter: Record<string, unknown> = { code };
+    const filter: Record<string, unknown> = {
+      code,
+      ...this.notDeletedFilter(),
+    };
 
     if (excludeId) {
       filter._id = { $ne: excludeId };
@@ -165,6 +217,7 @@ export class KpiEventTypesService {
       eventKind: eventType.eventKind,
       defaultPoints: eventType.defaultPoints,
       isActive: eventType.isActive,
+      deletedAt: eventType.deletedAt ?? null,
       createdAt: eventType.createdAt,
       updatedAt: eventType.updatedAt,
     };

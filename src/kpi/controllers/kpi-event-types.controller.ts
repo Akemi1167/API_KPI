@@ -56,4 +56,16 @@ export class KpiEventTypesController {
   deactivate(@Param('id') id: string) {
     return this.kpiEventTypesService.deactivate(id);
   }
+
+  @Patch(':id/soft-delete')
+  @ApiOperation({ summary: 'Xóa mềm loại cộng/trừ điểm' })
+  softDelete(@Param('id') id: string) {
+    return this.kpiEventTypesService.softDelete(id);
+  }
+
+  @Patch(':id/restore')
+  @ApiOperation({ summary: 'Khôi phục loại cộng/trừ điểm đã xóa mềm' })
+  restore(@Param('id') id: string) {
+    return this.kpiEventTypesService.restore(id);
+  }
 }
