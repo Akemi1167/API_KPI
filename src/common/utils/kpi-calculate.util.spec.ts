@@ -11,7 +11,7 @@ describe('calculateKpiScore', () => {
     expect(result.bonusPoints).toBe(0);
     expect(result.penaltyPoints).toBe(0);
     expect(result.rating).toBe(KpiRating.EXCELLENT);
-    expect(result.rewardPercent).toBe(150);
+    expect(result.rewardPercent).toBe(200);
   });
 
   it('should not cap bonus points', () => {
@@ -23,6 +23,8 @@ describe('calculateKpiScore', () => {
     expect(result.rawBonusPoints).toBe(14);
     expect(result.bonusPoints).toBe(14);
     expect(result.finalScore).toBe(104);
+    expect(result.rating).toBe(KpiRating.EXCELLENT);
+    expect(result.rewardPercent).toBe(200);
   });
 
   it('should apply penalty points directly', () => {
@@ -47,13 +49,29 @@ describe('calculateKpiScore', () => {
     expect(result.rewardPercent).toBe(100);
   });
 
-  it('should return no reward when final score is below 80', () => {
-    const result = calculateKpiScore(85, [
-      { eventKind: KpiEventKind.PENALTY, totalPoints: -10 },
-    ]);
+  it('should rate good for scores from 95 to 99', () => {
+    const result = calculateKpiScore(97, []);
+
+    expect(result.finalScore).toBe(97);
+    expect(result.rating).toBe(KpiRating.GOOD);
+    expect(result.rewardPercent).toBe(150);
+  });
+
+  it('should rate fair for scores from 70 to 79', () => {
+    const result = calculateKpiScore(75, []);
 
     expect(result.finalScore).toBe(75);
-    expect(result.rating).toBe(KpiRating.NO_REWARD);
+    expect(result.rating).toBe(KpiRating.FAIR);
+    expect(result.rewardPercent).toBe(50);
+  });
+
+  it('should return fail when final score is below 70', () => {
+    const result = calculateKpiScore(85, [
+      { eventKind: KpiEventKind.PENALTY, totalPoints: -20 },
+    ]);
+
+    expect(result.finalScore).toBe(65);
+    expect(result.rating).toBe(KpiRating.FAIL);
     expect(result.rewardPercent).toBe(0);
   });
 });

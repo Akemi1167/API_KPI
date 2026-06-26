@@ -15,6 +15,7 @@ import { KpiEventKind } from '../../common/enums/kpi-event-kind.enum';
 import {
   calculateKpiScore,
 } from '../../common/utils/kpi-calculate.util';
+import { buildKpiResultsExcelBuffer } from '../../common/utils/kpi-results-excel.util';
 import { toUserResponse } from '../../users/utils/user.mapper';
 import { AuditLogsService } from '../../audit/audit-logs.service';
 import { UsersService } from '../../users/users.service';
@@ -149,6 +150,41 @@ export class KpiResultsService {
       result.periodId.toString(),
       result,
     );
+  }
+
+  async exportEmployeesExcel(periodId: string, adminId: string) {
+    const period = await this.kpiPeriodsService.findByIdOrFail(periodId);
+    const employees = await this.usersService.findActiveByRole(UserRole.EMPLOYEE);
+    const results = await this.kpiResultModel.find({ periodId }).exec();
+    const resultsByUserId = new Map(
+      results.map((result) => [result.userId.toString(), result]),
+    );
+    const exportedAt = new Date();
+
+    const { buffer, filename } = await buildKpiResultsExcelBuffer({
+      period,
+      employees,
+      resultsByUserId,
+      exportedAt,
+    });
+
+    this.logger.log(
+      `Admin ${adminId} xuất báo cáo Excel KPI kỳ ${periodId}, ${employees.length} nhân viên`,
+    );
+
+    await this.auditLogsService.log({
+      action: AuditAction.KPI_RESULT_EXPORTED,
+      entityType: 'KpiPeriod',
+      entityId: periodId,
+      performedBy: adminId,
+      metadata: {
+        filename,
+        totalEmployees: employees.length,
+        totalResults: results.length,
+      },
+    });
+
+    return { buffer, filename };
   }
 
   async approve(id: string, adminId: string) {

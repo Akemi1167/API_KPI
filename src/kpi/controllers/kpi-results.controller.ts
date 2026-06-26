@@ -6,9 +6,12 @@ import {
   Patch,
   Post,
   Query,
+  Res,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { ApiAdminAuth } from '../../common/decorators/api-admin-auth.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -17,6 +20,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import type { CurrentUserPayload } from '../../common/interfaces/current-user-payload.interface';
 import { CalculateKpiResultDto } from '../dto/calculate-kpi-result.dto';
+import { ExportKpiResultsQueryDto } from '../dto/export-kpi-results-query.dto';
 import { FindKpiResultsQueryDto } from '../dto/find-kpi-results-query.dto';
 import { KpiResultBreakdownQueryDto } from '../dto/kpi-result-breakdown-query.dto';
 import { KpiResultsService } from '../services/kpi-results.service';
@@ -51,6 +55,33 @@ export class KpiResultsController {
   @ApiOperation({ summary: 'Danh sách kết quả KPI (phân trang)' })
   findAll(@Query() query: FindKpiResultsQueryDto) {
     return this.kpiResultsService.findAll(query);
+  }
+
+  @Get('export')
+  @ApiOperation({
+    summary: 'Xuất báo cáo Excel KPI toàn bộ nhân viên theo kỳ',
+  })
+  @ApiProduces(
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  )
+  async exportEmployeesExcel(
+    @Query() query: ExportKpiResultsQueryDto,
+    @CurrentUser() admin: CurrentUserPayload,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { buffer, filename } =
+      await this.kpiResultsService.exportEmployeesExcel(
+        query.periodId,
+        admin.id,
+      );
+
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+
+    return new StreamableFile(buffer);
   }
 
   @Get('breakdown')

@@ -60,20 +60,20 @@ function resolveRating(finalScore: number): {
   rewardPercent: number;
 } {
   if (finalScore >= 100) {
-    return { rating: KpiRating.EXCELLENT, rewardPercent: 150 };
+    return { rating: KpiRating.EXCELLENT, rewardPercent: 200 };
   }
 
   if (finalScore >= 95) {
-    return { rating: KpiRating.GOOD, rewardPercent: 120 };
-  }
-
-  if (finalScore >= 90) {
-    return { rating: KpiRating.PASS, rewardPercent: 100 };
+    return { rating: KpiRating.GOOD, rewardPercent: 150 };
   }
 
   if (finalScore >= 80) {
-    return { rating: KpiRating.PASS, rewardPercent: 50 };
+    return { rating: KpiRating.PASS, rewardPercent: 100 };
   }
 
-  return { rating: KpiRating.NO_REWARD, rewardPercent: 0 };
+  if (finalScore >= 70) {
+    return { rating: KpiRating.FAIR, rewardPercent: 50 };
+  }
+
+  return { rating: KpiRating.FAIL, rewardPercent: 0 };
 }

@@ -187,6 +187,7 @@ Lấy lại profile sau F5 hoặc kiểm tra session.
 | Kết quả KPI — danh sách | `GET /kpi-results` | ADMIN |
 | Kết quả KPI — tính điểm | `POST /kpi-results/calculate` | ADMIN |
 | Kết quả KPI — tính hàng loạt | `POST /kpi-results/calculate-period/:periodId` | ADMIN |
+| Kết quả KPI — xuất Excel toàn bộ nhân viên | `GET /kpi-results/export?periodId=` | ADMIN |
 | Kết quả KPI — duyệt/khóa | `PATCH /kpi-results/:id/approve`, `.../lock` | ADMIN |
 | Kết quả KPI — chi tiết cộng/trừ | `GET /kpi-results/:id/breakdown` | ADMIN |
 | Kết quả KPI — xem trước khi tính | `GET /kpi-results/breakdown?userId=&periodId=` | ADMIN |
@@ -475,8 +476,8 @@ Xóa sự kiện. Kỳ phải `OPEN`.
   bonusPoints: number;      // Tổng điểm cộng (không giới hạn)
   penaltyPoints: number;    // Số âm
   finalScore: number;
-  rating: 'Xuất sắc' | 'Tốt' | 'Đạt' | 'Không thưởng';
-  rewardPercent: number;    // 0 | 50 | 100 | 120 | 150
+  rating: 'Xuất sắc' | 'Tốt' | 'Đạt' | 'Khá' | 'Không đạt';
+  rewardPercent: number;    // 0 | 50 | 100 | 150 | 200
   isApproved: boolean;
   isLocked: boolean;
   approvedBy?: string;
@@ -631,6 +632,58 @@ Tính KPI cho **tất cả** nhân viên `EMPLOYEE` đang active.
 }
 ```
 
+#### `GET /kpi-results/export`
+
+Xuất **báo cáo Excel** KPI cho **toàn bộ nhân viên đang active** trong một kỳ.
+
+**Query (bắt buộc):**
+
+| Param | Ghi chú |
+|-------|---------|
+| `periodId` | ID kỳ KPI cần xuất |
+
+**Response `200`:** file `.xlsx` (binary) — **không** bọc `{ data: ... }` như JSON thông thường.
+
+**Headers response:**
+
+```
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+Content-Disposition: attachment; filename="bao-cao-kpi_{ma-ky}_{timestamp}.xlsx"
+```
+
+**Cấu trúc file Excel:**
+
+| Phần | Nội dung |
+|------|----------|
+| Header | Tiêu đề báo cáo, mã/tên kỳ, tháng-năm, khoảng thời gian, trạng thái kỳ, điểm gốc, thời điểm xuất, tổng nhân viên |
+| Bảng dữ liệu | STT, Mã NV, Họ tên, Email, Phòng ban, Chức vụ, Điểm gốc, Điểm cộng, Điểm trừ, Điểm cuối, Xếp loại, % Thưởng, Đã duyệt, Đã khóa |
+
+**Ghi chú CMS:**
+
+- Liệt kê **mọi nhân viên `EMPLOYEE` + `isActive: true`**, kể cả chưa tính KPI.
+- Nhân viên chưa có kết quả → cột điểm để trống, cột xếp loại hiển thị `Chưa tính KPI`.
+- Sắp xếp theo **mã nhân viên** (`employeeCode`).
+- Nên gọi `POST /kpi-results/calculate-period/:periodId` trước khi xuất để dữ liệu điểm đầy đủ.
+- Hành động xuất được ghi audit log `KPI_RESULT_EXPORTED`.
+
+**Ví dụ gọi (Axios):**
+
+```ts
+const response = await api.get('/kpi-results/export', {
+  params: { periodId },
+  responseType: 'blob',
+});
+
+const url = window.URL.createObjectURL(new Blob([response.data]));
+const link = document.createElement('a');
+link.href = url;
+link.download =
+  response.headers['content-disposition']?.match(/filename="(.+)"/)?.[1] ??
+  `bao-cao-kpi-${periodId}.xlsx`;
+link.click();
+window.URL.revokeObjectURL(url);
+```
+
 #### `PATCH /kpi-results/:id/approve`
 
 Duyệt kết quả (`isApproved: true`). Kỳ không được `LOCKED`.
@@ -672,11 +725,11 @@ finalScore      = baseScore + bonusPoints + penaltyPoints
 
 | finalScore | rating | rewardPercent | Gợi ý badge UI |
 |------------|--------|---------------|----------------|
-| ≥ 100 | Xuất sắc | 150% | Xanh đậm |
-| ≥ 95 | Tốt | 120% | Xanh |
-| ≥ 90 | Đạt | 100% | Vàng |
-| ≥ 80 | Đạt | 50% | Cam |
-| < 80 | Không thưởng | 0% | Xám |
+| ≥ 100 | Xuất sắc | 200% | Xanh đậm |
+| 95–99 | Tốt | 150% | Xanh |
+| 80–94 | Đạt | 100% | Vàng |
+| 70–79 | Khá | 50% | Cam |
+| < 70 | Không đạt | Không thưởng (0%) | Xám |
 
 ### 6.4. Nút hành động gợi ý
 
@@ -689,6 +742,7 @@ finalScore      = baseScore + bonusPoints + penaltyPoints
 | Duyệt kết quả | `!result.isApproved` && `!result.isLocked` && `period.status !== 'LOCKED'` |
 | Khóa kết quả | `!result.isLocked` |
 | Tính lại | `!result.isLocked` — confirm vì reset duyệt |
+| Xuất Excel toàn bộ nhân viên | Có `periodId` đã chọn — khuyến nghị sau bước tính hàng loạt |
 | Xem chi tiết cộng/trừ | Luôn gọi `GET .../breakdown` (có/không có `result`) |
 
 ### 6.5. Luồng nghiệp vụ CMS khuyến nghị
@@ -700,8 +754,9 @@ finalScore      = baseScore + bonusPoints + penaltyPoints
 4. (Seed hoặc tạo) danh mục cộng/trừ điểm
 5. Nhập sự kiện KPI cho từng nhân viên
 6. Tính KPI (từng người hoặc hàng loạt)
-7. Duyệt kết quả
-8. Đóng kỳ → Khóa kỳ (cuối chu kỳ)
+7. Xuất Excel báo cáo toàn bộ nhân viên (tùy chọn)
+8. Duyệt kết quả
+9. Đóng kỳ → Khóa kỳ (cuối chu kỳ)
 ```
 
 ---
@@ -788,6 +843,33 @@ Gợi ý layout CMS:
 3. `GET /kpi-event-types?eventKind=BONUS&limit=100` → chọn loại cộng điểm
 4. `POST /kpi-events` → submit
 
+### 7.6. Xuất Excel báo cáo KPI (màn kết quả theo kỳ)
+
+```ts
+async function exportKpiReport(periodId: string) {
+  const response = await api.get('/kpi-results/export', {
+    params: { periodId },
+    responseType: 'blob',
+  });
+
+  const disposition = response.headers['content-disposition'] ?? '';
+  const filename =
+    disposition.match(/filename="(.+)"/)?.[1] ?? `bao-cao-kpi-${periodId}.xlsx`;
+
+  const blob = new Blob([response.data], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+```
+
+Gợi ý UI: nút **「Xuất Excel」** trên màn danh sách kết quả KPI, bật khi admin đã chọn kỳ (`periodId`).
+
 ---
 
 ## 8. TypeScript types tham khảo
@@ -796,7 +878,7 @@ Gợi ý layout CMS:
 export type UserRole = 'ADMIN' | 'EMPLOYEE';
 export type KpiEventKind = 'BONUS' | 'PENALTY';
 export type KpiPeriodStatus = 'OPEN' | 'CLOSED' | 'LOCKED';
-export type KpiRating = 'Xuất sắc' | 'Tốt' | 'Đạt' | 'Không thưởng';
+export type KpiRating = 'Xuất sắc' | 'Tốt' | 'Đạt' | 'Khá' | 'Không đạt';
 
 export interface User {
   id: string;
@@ -850,7 +932,7 @@ export interface LoginResponse {
 UserRole:        ADMIN | EMPLOYEE
 KpiEventKind:    BONUS | PENALTY
 KpiPeriodStatus: OPEN | CLOSED | LOCKED
-KpiRating:       Xuất sắc | Tốt | Đạt | Không thưởng
+KpiRating:       Xuất sắc | Tốt | Đạt | Khá | Không đạt
 ```
 
 ---

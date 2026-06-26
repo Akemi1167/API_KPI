@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   Injectable,
   NestInterceptor,
+  StreamableFile,
 } from '@nestjs/common';
 import { Observable, map } from 'rxjs';
 import { PaginatedResult } from '../interfaces/paginated-result.interface';
@@ -15,6 +16,10 @@ export class TransformResponseInterceptor implements NestInterceptor {
   ): Observable<unknown> {
     return next.handle().pipe(
       map((data) => {
+        if (data instanceof StreamableFile) {
+          return data;
+        }
+
         if (this.isPaginatedResult(data)) {
           return data;
         }
