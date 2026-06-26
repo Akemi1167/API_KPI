@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - kpi_mongodb_data_final:/data/db
+    networks:
+      - kpi_network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  api:
+    image: kpi-api:latest
+    ports:
+      - '3101:3000' # API exposed on 3101
+    environment:
+      - PORT=${PORT}
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - BCRYPT_SALT_ROUNDS=${BCRYPT_SALT_ROUNDS}
+    networks:
+      - kpi_network
+    depends_on:
+      - mongodb
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  kpi_mongodb_data_final:
+
+networks:
+  kpi_network:
+    external: true

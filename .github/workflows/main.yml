@@ -1,0 +1,20 @@
+name: Notify Jenkins
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  notify-jenkins:
+    if: contains(github.repository, 'Akemi1167')
+    runs-on: ubuntu-latest
+    env:
+      JENKINS_HOST: 103.183.120.77
+
+    steps:
+      - name: Trigger Jenkins (main)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          curl -X POST \
+            http://$JENKINS_HOST:9999/generic-webhook-trigger/invoke?token=kpi-cms
