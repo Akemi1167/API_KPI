@@ -9,13 +9,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ApiAdminAuth } from '../common/decorators/api-admin-auth.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../common/enums/user-role.enum';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import type { CurrentUserPayload } from '../common/interfaces/current-user-payload.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { FindUsersQueryDto } from './dto/find-users-query.dto';
+import { ResetUserPasswordDto } from './dto/reset-user-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
@@ -61,5 +64,15 @@ export class UsersController {
   @ApiOperation({ summary: 'Khóa tài khoản người dùng' })
   deactivate(@Param('id') id: string) {
     return this.usersService.setActiveStatus(id, false);
+  }
+
+  @Patch(':id/password')
+  @ApiOperation({ summary: 'Admin đặt lại mật khẩu cho người dùng' })
+  resetPassword(
+    @Param('id') id: string,
+    @Body() dto: ResetUserPasswordDto,
+    @CurrentUser() admin: CurrentUserPayload,
+  ) {
+    return this.usersService.resetPassword(id, dto.newPassword, admin.id);
   }
 }

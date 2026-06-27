@@ -1,7 +1,9 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
@@ -97,6 +99,71 @@ export class UsersService {
 
   async findById(id: string) {
     return this.userModel.findById(id).exec();
+  }
+
+  async findByIdWithPassword(id: string) {
+    return this.userModel.findById(id).select('+passwordHash').exec();
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    if (currentPassword === newPassword) {
+      throw new BadRequestException(
+        'Mật khẩu mới phải khác mật khẩu hiện tại',
+      );
+    }
+
+    const user = await this.findByIdWithPassword(userId);
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    if (!user.isActive) {
+      throw new BadRequestException('Tài khoản đã bị khóa');
+    }
+
+    const isCurrentPasswordValid = await this.comparePassword(
+      currentPassword,
+      user.passwordHash,
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Mật khẩu hiện tại không đúng');
+    }
+
+    user.passwordHash = await this.hashPassword(newPassword);
+    await user.save();
+
+    await this.auditLogsService.log({
+      action: AuditAction.PASSWORD_CHANGED,
+      entityType: 'User',
+      entityId: userId,
+      performedBy: userId,
+    });
+
+    return { message: 'Đổi mật khẩu thành công' };
+  }
+
+  async resetPassword(userId: string, newPassword: string, adminId: string) {
+    const user = await this.findByIdWithPassword(userId);
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    user.passwordHash = await this.hashPassword(newPassword);
+    await user.save();
+
+    await this.auditLogsService.log({
+      action: AuditAction.PASSWORD_RESET,
+      entityType: 'User',
+      entityId: userId,
+      performedBy: adminId,
+    });
+
+    return { message: 'Đặt lại mật khẩu thành công' };
   }
 
   async findActiveByRole(role: UserRole) {

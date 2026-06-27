@@ -8,6 +8,7 @@ import { UsersService } from '../users/users.service';
 import { toUserResponse } from '../users/utils/user.mapper';
 import { getJwtExpiresIn } from '../common/utils/jwt.util';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -77,5 +78,13 @@ export class AuthService {
 
   async getProfile(user: CurrentUserPayload) {
     return this.usersService.findOne(user.id);
+  }
+
+  async changePassword(user: CurrentUserPayload, dto: ChangePasswordDto) {
+    return this.usersService.changePassword(
+      user.id,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 }

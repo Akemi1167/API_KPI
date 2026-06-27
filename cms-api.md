@@ -168,6 +168,41 @@ Lấy lại profile sau F5 hoặc kiểm tra session.
 
 **Response:** `{ data: User }` (cùng cấu trúc `user` ở login, không có token).
 
+### 3.4. PATCH `/auth/change-password` — JWT
+
+Đổi mật khẩu **tài khoản đang đăng nhập** (admin và nhân viên đều dùng được).
+
+**Body:**
+
+```json
+{
+  "currentPassword": "Admin@123",
+  "newPassword": "NewPass@456"
+}
+```
+
+| Field | Bắt buộc | Ghi chú |
+|-------|----------|---------|
+| `currentPassword` | Có | Mật khẩu hiện tại |
+| `newPassword` | Có | Min 6 ký tự, phải khác mật khẩu cũ |
+
+**Response `200`:**
+
+```json
+{
+  "data": {
+    "message": "Đổi mật khẩu thành công"
+  }
+}
+```
+
+**Lỗi thường gặp:**
+
+| HTTP | Trường hợp |
+|------|------------|
+| `401` | Mật khẩu hiện tại sai |
+| `400` | Mật khẩu mới trùng mật khẩu cũ / tài khoản bị khóa |
+
 ---
 
 ## 4. Ánh xạ màn hình CMS → API
@@ -176,9 +211,11 @@ Lấy lại profile sau F5 hoặc kiểm tra session.
 |--------------|-----------|-------|
 | Login | `POST /auth/login` | Public |
 | Dashboard / Header profile | `GET /auth/me` | JWT |
+| Đổi mật khẩu (tự đổi) | `PATCH /auth/change-password` | JWT |
 | Quản lý nhân viên — danh sách | `GET /users` | ADMIN |
 | Quản lý nhân viên — tạo/sửa | `POST /users`, `PATCH /users/:id` | ADMIN |
 | Quản lý nhân viên — khóa/mở | `PATCH /users/:id/activate`, `.../deactivate` | ADMIN |
+| Quản lý nhân viên — đặt lại mật khẩu | `PATCH /users/:id/password` | ADMIN |
 | Kỳ KPI — danh sách | `GET /kpi-periods` | ADMIN |
 | Kỳ KPI — tạo/sửa | `POST /kpi-periods`, `PATCH /kpi-periods/:id` | ADMIN |
 | Kỳ KPI — đóng/khóa | `PATCH /kpi-periods/:id/close`, `.../lock` | ADMIN |
@@ -285,6 +322,28 @@ Kích hoạt tài khoản (`isActive: true`).
 #### `PATCH /users/:id/deactivate`
 
 Khóa tài khoản (`isActive: false`).
+
+#### `PATCH /users/:id/password`
+
+Admin **đặt lại mật khẩu** cho bất kỳ user nào (admin hoặc nhân viên). Không cần biết mật khẩu cũ.
+
+**Body:**
+
+```json
+{
+  "newPassword": "TempPass@123"
+}
+```
+
+**Response `200`:**
+
+```json
+{
+  "data": {
+    "message": "Đặt lại mật khẩu thành công"
+  }
+}
+```
 
 ---
 
