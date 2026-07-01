@@ -17,4 +17,4 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run: |
           curl -X POST \
-            http://$JENKINS_HOST?token=kpi-api
+            "$JENKINS_HOST?token=kpi-api"
