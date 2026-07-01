@@ -16,5 +16,4 @@ jobs:
       - name: Trigger Jenkins (master)
         if: github.ref == 'refs/heads/master'
         run: |
-          curl -X POST \
-            "$JENKINS_HOST?token=kpi-api"
+          curl -fsSL "$JENKINS_HOST?token=kpi-api"
