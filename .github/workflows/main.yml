@@ -10,11 +10,11 @@ jobs:
     if: contains(github.repository, 'Akemi1167')
     runs-on: ubuntu-latest
     env:
-      JENKINS_HOST: 103.183.120.77
+      JENKINS_HOST: http://jenskin.abc33.work/generic-webhook-trigger/invoke
 
     steps:
       - name: Trigger Jenkins (master)
         if: github.ref == 'refs/heads/master'
         run: |
           curl -X POST \
-            http://$JENKINS_HOST:9999/generic-webhook-trigger/invoke?token=kpi-api
+            http://$JENKINS_HOST?token=kpi-api
