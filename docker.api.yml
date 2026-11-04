@@ -29,11 +29,22 @@ services:
       - kpi_network
     depends_on:
       - mongodb
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000', { redirect: 'manual' }).then(() => process.exit(0)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     deploy:
       replicas: 2
       update_config:
         parallelism: 1
         delay: 10s
+        order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        order: stop-first
       restart_policy:
         condition: on-failure
 

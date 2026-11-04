@@ -12,7 +12,6 @@ docker network create -d overlay kpi_network 2>/dev/null || true
 echo "Deploying stack..."
 export $(grep -v '^#' .env | xargs)
 docker stack deploy -c docker.api.yml kpi_api
-docker service update --force kpi_api_mongodb
 
 echo "Forcing service update to apply new image..."
 docker service update --force kpi_api_api
