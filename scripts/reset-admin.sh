@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# Reset admin: nếu MONGODB_URI trỏ host Docker (mongodb) thì chạy trong network Docker.
+# Reset admin. Nếu Mongo host là Docker service name → docker exec vào container API.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 PASSWORD="${ADMIN_PASSWORD:-}"
-NETWORK="${KPI_DOCKER_NETWORK:-kpi_network}"
 
 mongo_host="$(
   node -e "
@@ -31,45 +30,35 @@ run_local() {
   node scripts/reset-admin.cjs
 }
 
-run_in_docker() {
+run_via_api_container() {
   if ! command -v docker >/dev/null 2>&1; then
-    echo "MONGODB_URI dùng host '${mongo_host}' (chỉ resolve trong Docker),"
-    echo "nhưng máy này không có lệnh docker."
-    echo "Chạy bằng một trong hai cách:"
-    echo "  1) docker run --rm --network ${NETWORK} -v ${ROOT}:/app -w /app -e ADMIN_PASSWORD='...' node:20-alpine sh -c \"npm i bcryptjs mongoose --omit=dev && node scripts/reset-admin.cjs\""
-    echo "  2) Đổi tạm MONGODB_URI sang IP/host reachable rồi chạy lại"
+    echo "MONGODB_URI dùng host '${mongo_host}' (chỉ resolve trong Docker)."
+    echo "Không có lệnh docker trên máy này."
     exit 1
   fi
 
-  echo "Phát hiện Mongo host Docker '${mongo_host}' → chạy reset trong network '${NETWORK}'..."
-
-  # Ưu tiên container API đang chạy (đã có node_modules)
   local cid
   cid="$(docker ps -q -f name=kpi_api_api | head -n1 || true)"
-  if [[ -n "${cid}" ]]; then
-    docker exec "${cid}" mkdir -p /app/scripts >/dev/null 2>&1 || true
-    docker cp "${ROOT}/scripts/reset-admin.cjs" "${cid}:/app/scripts/reset-admin.cjs"
-    if docker exec -e ADMIN_PASSWORD="${PASSWORD}" "${cid}" node scripts/reset-admin.cjs; then
-      return 0
-    fi
-    echo "docker exec thất bại — thử docker run one-off..."
+  if [[ -z "${cid}" ]]; then
+    echo "Không tìm thấy container đang chạy (name chứa kpi_api_api)."
+    echo "Kiểm tra: docker ps | grep kpi_api"
+    exit 1
   fi
 
-  docker run --rm \
-    --network "${NETWORK}" \
-    -v "${ROOT}:/app" \
-    -w /app \
-    -e ADMIN_PASSWORD="${PASSWORD}" \
-    -e ADMIN_EMAIL \
-    -e ADMIN_EMPLOYEE_CODE \
-    -e ADMIN_FULL_NAME \
-    -e BCRYPT_SALT_ROUNDS \
-    node:20-alpine \
-    sh -c "npm install bcryptjs mongoose --omit=dev --no-audit --no-fund >/dev/null && node scripts/reset-admin.cjs"
+  echo "Phát hiện Mongo host Docker '${mongo_host}' → reset trong container ${cid}..."
+  docker exec "${cid}" mkdir -p /app/scripts
+  docker cp "${ROOT}/scripts/reset-admin.cjs" "${cid}:/app/scripts/reset-admin.cjs"
+
+  # Container API đã có bcrypt + mongoose; truyền ADMIN_PASSWORD qua -e
+  if [[ -n "${PASSWORD}" ]]; then
+    docker exec -e ADMIN_PASSWORD="${PASSWORD}" "${cid}" node scripts/reset-admin.cjs
+  else
+    docker exec "${cid}" node scripts/reset-admin.cjs
+  fi
 }
 
 if [[ "${mongo_host}" == "mongodb" || "${mongo_host}" == "mongo" ]]; then
-  run_in_docker
+  run_via_api_container
 else
   run_local
 fi

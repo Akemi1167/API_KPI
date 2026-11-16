@@ -181,13 +181,13 @@ main().catch((error) => {
   if (/EAI_AGAIN|ENOTFOUND|getaddrinfo/i.test(message)) {
     console.error('');
     console.error(
-      'Không resolve được host Mongo (thường vì MONGODB_URI dùng hostname Docker `mongodb`).',
+      'Không resolve được host Mongo (MONGODB_URI dùng hostname Docker `mongodb`).',
     );
-    console.error('Chạy trên server:');
-    console.error('  npm run reset:admin');
-    console.error('hoặc:');
+    console.error('Chạy trên host (Swarm overlay thường không attachable):');
+    console.error('  CID=$(docker ps -q -f name=kpi_api_api | head -n1)');
+    console.error('  docker cp scripts/reset-admin.cjs "$CID":/app/scripts/reset-admin.cjs');
     console.error(
-      "  docker run --rm --network kpi_network -v \"$PWD\":/app -w /app -e ADMIN_PASSWORD='...' node:20-alpine sh -c \"npm i bcryptjs mongoose --omit=dev && node scripts/reset-admin.cjs\"",
+      "  docker exec -e ADMIN_PASSWORD='MatKhauMoi!2026Xx' \"\$CID\" node scripts/reset-admin.cjs",
     );
   }
   process.exit(1);

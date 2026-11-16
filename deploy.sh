@@ -7,7 +7,8 @@ echo "Building new Docker image..."
 docker build -t kpi-api:latest .
 
 echo "Ensuring overlay network exists..."
-docker network create -d overlay kpi_network 2>/dev/null || true
+# --attachable: cho phép chạy one-off container nếu cần; reset admin ưu tiên docker exec
+docker network create -d overlay --attachable kpi_network 2>/dev/null || true
 
 echo "Deploying stack..."
 export $(grep -v '^#' .env | xargs)

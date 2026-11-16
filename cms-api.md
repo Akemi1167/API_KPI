@@ -165,14 +165,13 @@ sequenceDiagram
 - **Khóa tạm tài khoản:** sai mật khẩu liên tiếp (mặc định 5 lần) → khóa `LOGIN_LOCK_MINUTES` (mặc định 15 phút) → HTTP `429`.
 - Reset khẩn cấp admin (**chạy trên đúng server/DB đang login**; commit không đổi mật khẩu):
   - `ADMIN_PASSWORD='MatKhauMoi!2026Xx' npm run reset:admin`  
-    (tự chạy trong Docker network nếu `MONGODB_URI` trỏ host `mongodb`)
-  - Nếu lỗi `getaddrinfo EAI_AGAIN mongodb` khi chạy tay trên host:
+    (nếu `MONGODB_URI` trỏ host `mongodb` → tự `docker exec` vào container API)
+  - Lệnh tay khi overlay network không attachable:
     ```bash
-    docker run --rm --network kpi_network \
-      -v "$PWD":/app -w /app \
-      -e ADMIN_PASSWORD='MatKhauMoi!2026Xx' \
-      node:20-alpine \
-      sh -c "npm i bcryptjs mongoose --omit=dev && node scripts/reset-admin.cjs"
+    CID=$(docker ps -q -f name=kpi_api_api | head -n1)
+    docker exec "$CID" mkdir -p /app/scripts
+    docker cp scripts/reset-admin.cjs "$CID":/app/scripts/reset-admin.cjs
+    docker exec -e ADMIN_PASSWORD='MatKhauMoi!2026Xx' "$CID" node scripts/reset-admin.cjs
     ```
 
 ### 3.3. GET `/auth/me` — JWT
