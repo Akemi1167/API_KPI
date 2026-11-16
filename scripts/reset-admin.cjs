@@ -89,8 +89,28 @@ async function main() {
     passwordGenerated = true;
   }
 
-  const bcrypt = require('bcrypt');
-  const mongoose = require('mongoose');
+  function requireDep(name, hint) {
+    try {
+      return require(name);
+    } catch (error) {
+      if (error && error.code === 'MODULE_NOT_FOUND') {
+        console.error(
+          `Thiếu module '${name}'. Chạy trên server:\n  npm install ${hint || name} --omit=dev\nhoặc vào đúng thư mục có node_modules / container API.`,
+        );
+        process.exit(1);
+      }
+      throw error;
+    }
+  }
+
+  // bcryptjs (pure JS) ưu tiên — không cần native build như bcrypt
+  let bcrypt;
+  try {
+    bcrypt = require('bcryptjs');
+  } catch {
+    bcrypt = requireDep('bcrypt', 'bcryptjs');
+  }
+  const mongoose = requireDep('mongoose');
   const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 12;
   const passwordHash = await bcrypt.hash(password, saltRounds);
 
