@@ -163,7 +163,11 @@ sequenceDiagram
 - Token hết hạn theo `JWT_EXPIRES_IN` (mặc định `1d`) — cần xử lý `401` và đăng nhập lại.
 - **Rate limit:** tối đa **5 lần login / phút / IP** → HTTP `429` nếu vượt.
 - **Khóa tạm tài khoản:** sai mật khẩu liên tiếp (mặc định 5 lần) → khóa `LOGIN_LOCK_MINUTES` (mặc định 15 phút) → HTTP `429`.
-- Reset khẩn cấp admin trên server: `npm run reset:admin` (hoặc `ADMIN_PASSWORD='...' npm run reset:admin`).
+- Reset khẩn cấp admin (**chạy trên đúng server/DB đang login**; commit không đổi mật khẩu):
+  - Cần `dist/` đã build (`npm run build` hoặc image Docker đã build).
+  - Host: `ADMIN_PASSWORD='MatKhauMoi!2026Xx' npm run reset:admin`  
+    (tương đương `node dist/scripts/reset-admin.js` — **không cần ts-node**).
+  - Docker: `docker exec $(docker ps -q -f name=kpi_api_api | head -n1) node dist/scripts/reset-admin.js`
 
 ### 3.3. GET `/auth/me` — JWT
 

@@ -19,10 +19,14 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed:admin": "ts-node -r tsconfig-paths/register src/scripts/seed-admin.ts",
-    "reset:admin": "ts-node -r tsconfig-paths/register src/scripts/reset-admin.ts",
-    "seed:event-types": "ts-node -r tsconfig-paths/register src/scripts/seed-event-types.ts",
-    "seed:all": "ts-node -r tsconfig-paths/register src/scripts/seed-all.ts"
+    "seed:admin": "node dist/scripts/seed-admin.js",
+    "seed:admin:dev": "ts-node -r tsconfig-paths/register src/scripts/seed-admin.ts",
+    "reset:admin": "node dist/scripts/reset-admin.js",
+    "reset:admin:dev": "ts-node -r tsconfig-paths/register src/scripts/reset-admin.ts",
+    "seed:event-types": "node dist/scripts/seed-event-types.js",
+    "seed:event-types:dev": "ts-node -r tsconfig-paths/register src/scripts/seed-event-types.ts",
+    "seed:all": "node dist/scripts/seed-all.js",
+    "seed:all:dev": "ts-node -r tsconfig-paths/register src/scripts/seed-all.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
