@@ -176,9 +176,20 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(
-    'Reset admin failed:',
-    error instanceof Error ? error.message : error,
-  );
+  const message = error instanceof Error ? error.message : String(error);
+  console.error('Reset admin failed:', message);
+  if (/EAI_AGAIN|ENOTFOUND|getaddrinfo/i.test(message)) {
+    console.error('');
+    console.error(
+      'Không resolve được host Mongo (thường vì MONGODB_URI dùng hostname Docker `mongodb`).',
+    );
+    console.error('Chạy trên server:');
+    console.error('  npm run reset:admin');
+    console.error('hoặc:');
+    console.error(
+      "  docker run --rm --network kpi_network -v \"$PWD\":/app -w /app -e ADMIN_PASSWORD='...' node:20-alpine sh -c \"npm i bcryptjs mongoose --omit=dev && node scripts/reset-admin.cjs\"",
+    );
+  }
   process.exit(1);
 });
+

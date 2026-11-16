@@ -164,11 +164,16 @@ sequenceDiagram
 - **Rate limit:** tối đa **5 lần login / phút / IP** → HTTP `429` nếu vượt.
 - **Khóa tạm tài khoản:** sai mật khẩu liên tiếp (mặc định 5 lần) → khóa `LOGIN_LOCK_MINUTES` (mặc định 15 phút) → HTTP `429`.
 - Reset khẩn cấp admin (**chạy trên đúng server/DB đang login**; commit không đổi mật khẩu):
-  - Host (không cần `build` / `ts-node`):  
-    `ADMIN_PASSWORD='MatKhauMoi!2026Xx' npm run reset:admin`  
-    (= `node scripts/reset-admin.cjs`)
-  - Docker: copy `scripts/reset-admin.cjs` vào image rồi  
-    `docker exec ... node scripts/reset-admin.cjs`
+  - `ADMIN_PASSWORD='MatKhauMoi!2026Xx' npm run reset:admin`  
+    (tự chạy trong Docker network nếu `MONGODB_URI` trỏ host `mongodb`)
+  - Nếu lỗi `getaddrinfo EAI_AGAIN mongodb` khi chạy tay trên host:
+    ```bash
+    docker run --rm --network kpi_network \
+      -v "$PWD":/app -w /app \
+      -e ADMIN_PASSWORD='MatKhauMoi!2026Xx' \
+      node:20-alpine \
+      sh -c "npm i bcryptjs mongoose --omit=dev && node scripts/reset-admin.cjs"
+    ```
 
 ### 3.3. GET `/auth/me` — JWT
 
