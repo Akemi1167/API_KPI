@@ -18,7 +18,7 @@ docker service update --force kpi_api_api
 
 echo "Deploy API completed!"
 echo ""
-echo "Nếu cần reset mật khẩu admin trên server (sau deploy image mới):"
-echo "  1) Đảm bảo ADMIN_PASSWORD đã có trong file .env trên server"
-echo "  2) Chạy:"
-echo "     docker exec \$(docker ps -q -f name=kpi_api_api | head -n1) node dist/scripts/reset-admin.js"
+echo "Nếu cần reset mật khẩu admin trên server:"
+echo "  1) Đảm bảo ADMIN_PASSWORD / MONGODB_URI có trong .env"
+echo "  2) Host:  ADMIN_PASSWORD='...' npm run reset:admin"
+echo "  3) Docker: docker exec \$(docker ps -q -f name=kpi_api_api | head -n1) node scripts/reset-admin.cjs"
