@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { UsersService } from '../users/users.service';
-import { ADMIN_USER_SEED } from './seed-data/admin-user.data';
+import { getAdminUserSeed } from './seed-data/admin-user.data';
 import { printSeedAdminResult } from './seed-log.util';
 
 async function seedAdmin() {
@@ -9,11 +9,20 @@ async function seedAdmin() {
     logger: ['error', 'warn'],
   });
   const usersService = app.get(UsersService);
+  const seed = getAdminUserSeed();
 
   let created = false;
 
   try {
-    const result = await usersService.upsertSeedAdmin({ ...ADMIN_USER_SEED });
+    const result = await usersService.upsertSeedAdmin({
+      employeeCode: seed.employeeCode,
+      fullName: seed.fullName,
+      email: seed.email,
+      password: seed.password,
+      role: seed.role,
+      positionName: seed.positionName,
+      departmentName: seed.departmentName,
+    });
     created = result.created;
   } catch (error) {
     console.error(
@@ -24,7 +33,12 @@ async function seedAdmin() {
   } finally {
     await app.close();
     if (process.exitCode !== 1) {
-      printSeedAdminResult(created);
+      printSeedAdminResult({
+        created,
+        email: seed.email,
+        password: seed.password,
+        passwordGenerated: seed.passwordGenerated,
+      });
     }
   }
 }

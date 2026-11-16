@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
+import { IsStrongPassword } from '../../common/utils/password-policy.util';
 
 /** Đổi mật khẩu tài khoản đang đăng nhập. */
 export class ChangePasswordDto {
@@ -7,8 +8,8 @@ export class ChangePasswordDto {
   @IsNotEmpty()
   currentPassword: string;
 
-  /** Mật khẩu mới (tối thiểu 6 ký tự). */
+  /** Mật khẩu mới (mạnh: ≥8 ký tự, hoa/thường/số/ký tự đặc biệt). */
   @IsString()
-  @MinLength(6)
+  @IsStrongPassword()
   newPassword: string;
 }

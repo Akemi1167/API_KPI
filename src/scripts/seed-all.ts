@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { KpiEventTypesService } from '../kpi/services/kpi-event-types.service';
 import { UsersService } from '../users/users.service';
-import { ADMIN_USER_SEED } from './seed-data/admin-user.data';
+import { getAdminUserSeed } from './seed-data/admin-user.data';
 import { KPI_EVENT_TYPES_SEED } from './seed-data/kpi-event-types.data';
 import { printSeedAllResult } from './seed-log.util';
 
@@ -12,13 +12,20 @@ async function seedAll() {
   });
   const usersService = app.get(UsersService);
   const kpiEventTypesService = app.get(KpiEventTypesService);
+  const seed = getAdminUserSeed();
 
   let adminCreated = false;
   let eventTypesCreated = 0;
 
   try {
     const adminResult = await usersService.upsertSeedAdmin({
-      ...ADMIN_USER_SEED,
+      employeeCode: seed.employeeCode,
+      fullName: seed.fullName,
+      email: seed.email,
+      password: seed.password,
+      role: seed.role,
+      positionName: seed.positionName,
+      departmentName: seed.departmentName,
     });
     adminCreated = adminResult.created;
 

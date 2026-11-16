@@ -5,6 +5,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { SWAGGER_JWT_NAME } from '../common/decorators/api-admin-auth.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -20,8 +21,11 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
-  @ApiOperation({ summary: 'Đăng nhập và nhận JWT token' })
+  @ApiOperation({
+    summary: 'Đăng nhập và nhận JWT token (giới hạn 5 lần / phút / IP)',
+  })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }

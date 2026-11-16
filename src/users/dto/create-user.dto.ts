@@ -5,9 +5,9 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  MinLength,
 } from 'class-validator';
 import { UserRole } from '../../common/enums/user-role.enum';
+import { IsStrongPassword } from '../../common/utils/password-policy.util';
 
 export class CreateUserDto {
   @IsString()
@@ -22,7 +22,7 @@ export class CreateUserDto {
   email: string;
 
   @IsString()
-  @MinLength(6)
+  @IsStrongPassword()
   password: string;
 
   @IsOptional()

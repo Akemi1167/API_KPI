@@ -38,7 +38,7 @@ npm run seed:all
 | API | `http://localhost:{PORT}/api` |
 | Swagger | `http://localhost:{PORT}/api/docs` |
 | Health | `GET /api/health` |
-| Admin (sau seed) | `admin@example.com` / `Admin@123` |
+| Admin (sau seed/reset) | Lấy từ `ADMIN_EMAIL` / `ADMIN_PASSWORD` trong `.env` (hoặc output `npm run reset:admin`) |
 
 ---
 
@@ -161,6 +161,9 @@ sequenceDiagram
 - Chỉ user `isActive: true` mới đăng nhập được.
 - CMS quản trị yêu cầu `user.role === "ADMIN"`.
 - Token hết hạn theo `JWT_EXPIRES_IN` (mặc định `1d`) — cần xử lý `401` và đăng nhập lại.
+- **Rate limit:** tối đa **5 lần login / phút / IP** → HTTP `429` nếu vượt.
+- **Khóa tạm tài khoản:** sai mật khẩu liên tiếp (mặc định 5 lần) → khóa `LOGIN_LOCK_MINUTES` (mặc định 15 phút) → HTTP `429`.
+- Reset khẩn cấp admin trên server: `npm run reset:admin` (hoặc `ADMIN_PASSWORD='...' npm run reset:admin`).
 
 ### 3.3. GET `/auth/me` — JWT
 
@@ -184,7 +187,7 @@ Lấy lại profile sau F5 hoặc kiểm tra session.
 | Field | Bắt buộc | Ghi chú |
 |-------|----------|---------|
 | `currentPassword` | Có | Mật khẩu hiện tại |
-| `newPassword` | Có | Min 6 ký tự, phải khác mật khẩu cũ |
+| `newPassword` | Có | ≥8 ký tự (hoa/thường/số/ký tự đặc biệt), phải khác mật khẩu cũ |
 
 **Response `200`:**
 
@@ -305,7 +308,7 @@ Chi tiết một user.
 | `employeeCode` | Có | Unique |
 | `fullName` | Có | |
 | `email` | Có | Unique, email hợp lệ |
-| `password` | Có | Min 6 ký tự |
+| `password` | Có | ≥8 ký tự, có chữ hoa/thường/số/ký tự đặc biệt |
 | `role` | Không | Mặc định `EMPLOYEE` |
 | `positionName` | Không | |
 | `departmentName` | Không | Mặc định `Phòng Phát triển Phần mềm` |

@@ -35,7 +35,16 @@ export class User {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  /** Số lần đăng nhập sai liên tiếp. */
+  @Prop({ default: 0, select: false })
+  failedLoginAttempts: number;
+
+  /** Khóa đăng nhập đến thời điểm này (chống dò mật khẩu). */
+  @Prop({ type: Date, default: null, select: false })
+  lockUntil?: Date | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.index({ role: 1, isActive: 1 });
+UserSchema.index({ lockUntil: 1 });

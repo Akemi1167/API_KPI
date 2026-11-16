@@ -93,8 +93,54 @@ export class UsersService {
   async findByEmailWithPassword(email: string) {
     return this.userModel
       .findOne({ email: email.trim().toLowerCase() })
-      .select('+passwordHash')
+      .select('+passwordHash +failedLoginAttempts +lockUntil')
       .exec();
+  }
+
+  isLoginLocked(user: UserDocument) {
+    return Boolean(user.lockUntil && user.lockUntil.getTime() > Date.now());
+  }
+
+  getLoginLockRemainingSeconds(user: UserDocument) {
+    if (!user.lockUntil) {
+      return 0;
+    }
+    return Math.max(0, Math.ceil((user.lockUntil.getTime() - Date.now()) / 1000));
+  }
+
+  async registerFailedLogin(user: UserDocument) {
+    const maxAttempts =
+      Number(this.configService.get<string>('LOGIN_MAX_FAILED_ATTEMPTS')) || 5;
+    const lockMinutes =
+      Number(this.configService.get<string>('LOGIN_LOCK_MINUTES')) || 15;
+
+    const attempts = (user.failedLoginAttempts || 0) + 1;
+    user.failedLoginAttempts = attempts;
+
+    if (attempts >= maxAttempts) {
+      user.lockUntil = new Date(Date.now() + lockMinutes * 60 * 1000);
+    }
+
+    await user.save();
+    return {
+      attempts,
+      maxAttempts,
+      locked: this.isLoginLocked(user),
+      lockUntil: user.lockUntil ?? null,
+    };
+  }
+
+  async clearLoginFailures(user: UserDocument) {
+    if (
+      (user.failedLoginAttempts || 0) === 0 &&
+      (user.lockUntil == null || user.lockUntil === undefined)
+    ) {
+      return;
+    }
+
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
   }
 
   async findById(id: string) {
@@ -217,12 +263,15 @@ export class UsersService {
     return bcrypt.hash(password, saltRounds);
   }
 
-  /** Tạo mới hoặc đồng bộ mật khẩu admin seed để đăng nhập luôn khớp seed data. */
+  /**
+   * Tạo mới hoặc đồng bộ mật khẩu admin seed.
+   * Đồng thời mở khóa đăng nhập và kích hoạt lại tài khoản.
+   */
   async upsertSeedAdmin(dto: CreateUserDto) {
     const email = dto.email.trim().toLowerCase();
     const existing = await this.userModel
       .findOne({ email })
-      .select('+passwordHash')
+      .select('+passwordHash +failedLoginAttempts +lockUntil')
       .exec();
 
     if (existing) {
@@ -235,7 +284,12 @@ export class UsersService {
       if (dto.departmentName !== undefined) {
         existing.departmentName = dto.departmentName;
       }
+      if (dto.employeeCode) {
+        existing.employeeCode = dto.employeeCode;
+      }
       existing.isActive = true;
+      existing.failedLoginAttempts = 0;
+      existing.lockUntil = null;
       await existing.save();
       return { user: toUserResponse(existing), created: false };
     }

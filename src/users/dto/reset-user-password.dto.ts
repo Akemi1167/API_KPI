@@ -1,9 +1,10 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsString } from 'class-validator';
+import { IsStrongPassword } from '../../common/utils/password-policy.util';
 
 /** Admin đặt lại mật khẩu cho người dùng. */
 export class ResetUserPasswordDto {
-  /** Mật khẩu mới (tối thiểu 6 ký tự). */
+  /** Mật khẩu mới (mạnh: ≥8 ký tự, hoa/thường/số/ký tự đặc biệt). */
   @IsString()
-  @MinLength(6)
+  @IsStrongPassword()
   newPassword: string;
 }
