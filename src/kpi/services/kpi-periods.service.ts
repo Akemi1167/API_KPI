@@ -86,6 +86,22 @@ export class KpiPeriodsService {
     return this.toResponse(period);
   }
 
+  async findLabelsByIds(ids: string[]) {
+    if (ids.length === 0) return [];
+
+    const periods = await this.kpiPeriodModel
+      .find({ _id: { $in: ids } })
+      .exec();
+
+    return periods.map((period) => ({
+      id: period._id.toString(),
+      code: period.code,
+      name: period.name,
+      year: period.year,
+      month: period.month,
+    }));
+  }
+
   async findByIdOrFail(id: string) {
     const period = await this.kpiPeriodModel.findById(id).exec();
     if (!period) {

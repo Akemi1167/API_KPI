@@ -111,8 +111,16 @@ export class KpiResultsService {
       this.kpiResultModel.countDocuments(filter).exec(),
     ]);
 
+    const periodLabels = await this.kpiPeriodsService.findLabelsByIds([
+      ...new Set(results.map((result) => result.periodId.toString())),
+    ]);
+    const periodById = new Map(periodLabels.map((period) => [period.id, period]));
+
     return buildPaginatedResult(
-      results.map((result) => this.toResponse(result)),
+      results.map((result) => ({
+        ...this.toResponse(result),
+        period: periodById.get(result.periodId.toString()) ?? null,
+      })),
       total,
       query.page,
       query.limit,
