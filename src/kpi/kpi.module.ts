@@ -5,6 +5,7 @@ import { KpiEventTypesController } from './controllers/kpi-event-types.controlle
 import { KpiEventsController } from './controllers/kpi-events.controller';
 import { KpiPeriodsController } from './controllers/kpi-periods.controller';
 import { KpiResultsController } from './controllers/kpi-results.controller';
+import { MeKpiPeriodsController } from './controllers/me-kpi-periods.controller';
 import { MeKpiResultsController } from './controllers/me-kpi-results.controller';
 import { PublicKpiEventTypesController } from './controllers/public-kpi-event-types.controller';
 import { KpiEvent, KpiEventSchema } from './schemas/kpi-event.schema';
@@ -35,6 +36,7 @@ import { KpiResultsService } from './services/kpi-results.service';
     PublicKpiEventTypesController,
     KpiEventsController,
     KpiResultsController,
+    MeKpiPeriodsController,
     MeKpiResultsController,
   ],
   providers: [
